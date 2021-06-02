@@ -49,23 +49,6 @@ tables_prefix = "matomo_"
 enable_ssl = $enable_ssl
 $ssl_ca
 
-#[ChainedCache]
-#backends[] = array
-#backends[] = redis
-
-#[RedisCache]
-#host = "$redis_host"
-#port = $redis_port
-#password = "$redis_pass"
-#database = 14
-#timeout = 0.0
-
-#[QueuedTracking]
-#redisHost = "$redis_host"
-#redisPort = $redis_port
-#redisPassword = "$redis_pass"
-#redisDatabase = 0
-
 [Tracker]
 record_statistics = $record_statistics
 
@@ -215,7 +198,6 @@ PluginsInstalled[] = "MarketingCampaignsReporting"
 PluginsInstalled[] = "IntranetMeasurable"
 PluginsInstalled[] = "TwoFactorAuth"
 PluginsInstalled[] = "GeoIp2"
-#PluginsInstalled[] = "QueuedTracking"
 EOD;
 
 
