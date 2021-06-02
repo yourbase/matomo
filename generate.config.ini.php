@@ -1,6 +1,6 @@
 <?php
 
-$db = parse_url(getenv('MYSQL_URL'));
+$db = parse_url(getenv('JAWSDB_MARIA_URL'));
 $host = $db['host'];
 $user = $db['user'];
 $pass = $db['pass'];
