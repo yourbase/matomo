@@ -45,7 +45,7 @@ username = "$user"
 password = "$pass"
 dbname = "$dbname"
 port = $port
-tables_prefix = "piwik_"
+tables_prefix = "matomo_"
 enable_ssl = $enable_ssl
 $ssl_ca
 
