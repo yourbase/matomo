@@ -58,7 +58,7 @@ browser_archiving_disabled_enforce = 1
 enable_processing_unique_visitors_year = 1
 secure_protocol = $secure_protocol
 force_ssl = $secure_protocol
-$trusted_hosts_lines
+enable_trusted_host_check=0
 multi_server_environment = $secure_protocol
 proxy_client_headers[] = HTTP_X_FORWARDED_FOR
 
