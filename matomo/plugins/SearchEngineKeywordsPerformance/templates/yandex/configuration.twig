@@ -1,0 +1,286 @@
+{% extends 'admin.twig' %}
+
+{% set title %}{{ 'SearchEngineKeywordsPerformance_SearchEngineKeywordsPerformance'|translate }}{% endset %}
+
+{% block content %}
+
+    <div piwik-content-block
+         content-title="{{ title|e('html_attr') }}"
+    >
+
+        <h2>{{ 'SearchEngineKeywordsPerformance_YandexConfigurationTitle'|translate }}</h2>
+
+        {{ 'SearchEngineKeywordsPerformance_YandexConfigurationDescription'|translate }}
+
+
+    </div>
+
+    {% if isClientConfigured and isOAuthConfigured %}
+        <div piwik-content-block class="{% if configuredMeasurables %} configured{% endif %}"
+             content-title="{{ 'SearchEngineKeywordsPerformance_ConfigureMeasurables'|translate|e('html_attr') }}">
+
+            <p>{{ 'SearchEngineKeywordsPerformance_ConfigureMeasurableBelow'|translate }}</p>
+
+            <div class="ui-confirm" id="confirmRemoveAccountConfig">
+                <h2>{{ 'SearchEngineKeywordsPerformance_ConfigRemovalConfirm'|translate('<span id="removeaccountconfig"></span>')|raw }}</h2>
+                <input role="yes" type="button" value="{{ 'General_Yes'|translate|e('html_attr') }}"/>
+                <input role="no" type="button" value="{{ 'General_No'|translate|e('html_attr') }}"/>
+            </div>
+
+            <table piwik-content-table class="measurableList">
+                <thead>
+                <tr>
+                    <th>{{ 'General_Measurable'|translate }}</th>
+                    <th>{{ 'Mobile_Account'|translate }}</th>
+                    <th>{{ 'Goals_URL'|translate }}</th>
+                    <th>{{ 'SearchEngineKeywordsPerformance_LastImport'|translate }}</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for siteId,config in configuredMeasurables %}
+
+                    {% set accountAndUrl = config.yandexAccountAndHostId|split('##') %}
+
+                    {% if accounts[accountAndUrl[0]] is defined %}
+                        <tr class="{% if not sitesInfos[siteId]['accountValid'] or not sitesInfos[siteId]['urlValid'] %}error{% endif %}">
+                            <td>{{ sitesInfos[siteId].name|raw }}</td>
+
+                            <td>{% if not sitesInfos[siteId]['accountValid'] %}<span class="icon-error"></span> {% endif %}{{ accounts[accountAndUrl[0]].name }}</td>
+                            <td>{% if not sitesInfos[siteId]['urlValid'] %}<span class="icon-error"></span> {% endif %}
+                                {% set found = 0 %}
+                                {% for url,data in accounts[accountAndUrl[0]].urls %}
+                                    {% if data.host_id == accountAndUrl[1] %}
+                                        {{ url }}
+                                        {% set found = 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not found %}
+                                    {{ accountAndUrl[1] }}
+                                {% endif %}
+                            </td>
+                            <td>{{ sitesInfos[siteId].lastRun }}</td>
+                            <td>
+                                <form method="POST" action=""
+                                      onsubmit="$('#removeaccountconfig').html('{{ sitesInfos[siteId].name|e('html_attr') }}'); var form = this; piwikHelper.modalConfirm('#confirmRemoveAccountConfig', {yes: function() { form.submit(); }}); return false;">
+                                    <input type="hidden" name="removeConfig" value="{{ siteId|e('html_attr') }}">
+                                    <button type="submit" class="btn-flat icon-delete" title="{{ 'General_Delete'|translate|e('html_attr') }}"></button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                <tr>
+                    <td colspan="5" align="right">
+                        <button class="btn"
+                                onclick="$('.configureMeasurableForm').show(); $(this).parents('tr').hide(); return false">
+                            {{ 'SearchEngineKeywordsPerformance_AddConfiguration'|translate }}
+                        </button>
+                    </td>
+                </tr>
+                <tr style="display: none;" class="configureMeasurableForm">
+                    <td>
+                        <div piwik-field uicontrol="site" ng-model="form.site" full-width="true" value="{{ currentSite|json_encode }}"
+                             title="{{ 'CoreHome_ChooseX'|translate('General_Measurable'|translate)|e('html_attr') }}">
+                        </div>
+                    </td>
+                    <td colspan="2">
+                        <div piwik-field uicontrol="select" ng-model="form.yandexAccountAndHostId"
+                             title="{{ 'SearchEngineKeywordsPerformance_UrlOfAccount'|translate|e('html_attr') }}" full-width="true"
+                             options='{{ urlOptions|json_encode }}'>
+                        </div>
+                    </td>
+                    <td>
+                        <form action="" method="post">
+                            <input type="hidden" name="yandexSiteId" ng-value="form.site.id">
+                            <input type="hidden" name="yandexAccountAndHostId" ng-value="form.yandexAccountAndHostId">
+                            <input type="submit" class="btn" value="{{ 'General_Save'|translate|e('html_attr') }}" />
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    {% if isClientConfigured %}
+        <div piwik-content-block class="oauthconfiguration{% if isOAuthConfigured %} configured{% endif %} yandex"
+             content-title="{{ 'SearchEngineKeywordsPerformance_ConnectYandexAccounts'|translate|e('html_attr') }}"
+        >
+
+            <div class="ui-confirm" id="confirmDeleteAccount">
+                <h2>{{ 'SearchEngineKeywordsPerformance_AccountRemovalConfirm'|translate('<span id="removeaccountname"></span>')|raw }}</h2>
+                <input role="yes" type="button" value="{{ 'General_Yes'|translate|e('html_attr') }}"/>
+                <input role="no" type="button" value="{{ 'General_No'|translate|e('html_attr') }}"/>
+            </div>
+
+            <div class="oauthconfigoptions">
+
+                {% if isOAuthConfigured %}
+                    <p>{{ 'SearchEngineKeywordsPerformance_CurrentlyConnectedAccounts'|translate(accounts|length) }}</p>
+                {% else %}
+                    <p>{{ 'SearchEngineKeywordsPerformance_ConnectFirstAccount'|translate }}</p>
+                {% endif %}
+
+                {% if hasOAuthError %}
+                    <p piwik-notification context="error">
+                        {{ 'SearchEngineKeywordsPerformance_OAuthError'|translate }}
+                        {% if hasOAuthError is not same as (true) %}
+                            <br />{{ hasOAuthError }}
+                        {% endif %}
+                    </p>
+                {% endif %}
+
+                <div class="accounts">
+
+                    {% for accountid,account in accounts %}
+                        <div class="account {% if account.urls|length == 0 or account.hasError is defined %}invalid{% endif %}">
+
+                            <div class="logo">
+                                <img src="{{ account.picture }}">
+                            </div>
+
+                            <h3>{{ account.name }}</h3>
+
+                            <p>
+                                {{ 'SearchEngineKeywordsPerformance_AccountAddedBy'|translate(account.username, account.created_formatted)|raw }}
+                            </p>
+
+                            {% if account.hasError is defined %}
+                                <p class="accounterror"><span class="icon-warning"></span> {{ 'SearchEngineKeywordsPerformance_AccountConnectionValidationError'|translate }} {{ account.hasError }}</p>
+
+                                <p>{{ 'SearchEngineKeywordsPerformance_ReAuthenticateIfPermanentError'|translate }}</p>
+
+                            {% else %}
+                                {% if account.urls|length == 0 %}
+                                    <p class="accounterror"><span
+                                                class="icon-warning"></span> {{ 'SearchEngineKeywordsPerformance_AccountNoAccess'|translate }}
+                                    </p>
+                                {% else %}
+
+                                    {% set accountUrlVerified = '' %}
+                                    {% set accountUrlUnverified = '' %}
+                                    {% for url,hostdata in account.urls %}
+                                            {% set hostentry %}
+                                            <li>
+                                                <span class="icon-{% if hostdata.verified %}success{% else %}error{% endif %}"></span> {{ url }}
+                                            </li>
+                                            {% endset %}
+                                        {% if hostdata.verified %}
+                                            {% set accountUrlVerified = accountUrlVerified ~ hostentry %}
+                                        {% else %}
+                                            {% set accountUrlUnverified = accountUrlUnverified ~ hostentry %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if accountUrlVerified %}
+                                        <p>{{ 'SearchEngineKeywordsPerformance_AvailableSites'|translate }}</p>
+                                        <ul>
+                                            {{ accountUrlVerified|raw }}
+                                        </ul>
+                                    {% else %}
+                                        <p class="accounterror"><span
+                                                    class="icon-warning"></span> {{ 'SearchEngineKeywordsPerformance_AccountNoAccess'|translate }}
+                                        </p>
+                                    {% endif %}
+
+                                    {% if accountUrlUnverified %}
+                                        <p>{{ 'SearchEngineKeywordsPerformance_UnverifiedSites'|translate }}</p>
+
+                                        <ul>
+                                            {{ accountUrlUnverified|raw }}
+                                        </ul>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+
+                            {% if account.authDaysAgo >= 180 %}
+                                <p class="accounterror"><span
+                                            class="icon-warning"></span> {{ 'SearchEngineKeywordsPerformance_OAuthAccessTimedOut'|translate }}
+                                </p>
+                            {% elseif account.authDaysAgo >= 150  %}
+                                <p class="accounterror"><span
+                                            class="icon-warning"></span> {{ 'SearchEngineKeywordsPerformance_OAuthAccessWillTimeOutSoon'|translate(180-account.authDaysAgo) }}
+                                </p>
+                            {% else  %}
+                                <p>{{ 'SearchEngineKeywordsPerformance_OAuthAccessWillTimeOut'|translate(180, 180-account.authDaysAgo)|raw }}</p>
+                            {% endif %}
+
+                            <div class="cta">
+                                <form method="post" action="{{ {action: 'forwardToYandexAuth'}|urlRewriteWithParameters|e('html_attr') }}">
+                                    <input type="hidden" name="auth_nonce" value="{{ auth_nonce|e('html_attr') }}" />
+                                    <button type="submit" class="btn">{{ 'SearchEngineKeywordsPerformance_Reauthenticate'|translate }}</button>
+                                </form>
+                                <form method="POST" action=""
+                                      onsubmit="$('#removeaccountname').text('{{ account.name|e('html_attr') }}'); var form = this; piwikHelper.modalConfirm('#confirmDeleteAccount', {yes: function() { form.submit(); }}); return false;">
+                                    <input type="hidden" name="remove" value="{{ accountid|e('html_attr') }}">
+                                    <button type="submit" class="btn">{{ 'General_Remove'|translate }}</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    <div class="account add">
+
+                        <div class="icon-add logo"></div>
+
+                        <h3>{{ 'SearchEngineKeywordsPerformance_ConnectAccount'|translate }}</h3>
+
+                        <p>{{ 'SearchEngineKeywordsPerformance_ConnectAccountDescription'|translate('Yandex') }}</p>
+
+                        <p>{{ 'SearchEngineKeywordsPerformance_ConnectAccountYandex'|translate('180') }}</p>
+
+                        <div class="cta">
+                            <form method="post" action="{{ {action: 'forwardToYandexAuth'}|urlRewriteWithParameters|e('html_attr') }}" id="clientauthform">
+                                <input type="hidden" name="auth_nonce" value="{{ auth_nonce|e('html_attr') }}" />
+                                <button type="submit" class="btn">{{ 'SearchEngineKeywordsPerformance_StartOAuth'|translate }}</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="clear"></div>
+                </div>
+
+            </div>
+        </div>
+    {% endif %}
+
+    {% if isClientConfigured %}
+
+        <div piwik-content-block class="clientconfiguration{% if isClientConfigured %} configured{% endif %}"
+             content-title="{{ 'SearchEngineKeywordsPerformance_OAuthClientConfig'|translate|e('html_attr') }}"
+        >
+            <p><strong>{{ 'SearchEngineKeywordsPerformance_ClientId'|translate }}:</strong> {{ clientId }}</p>
+            <p><strong>{{ 'SearchEngineKeywordsPerformance_ClientSecret'|translate }}:</strong> {{ clientSecret }}</p>
+        </div>
+    {% endif %}
+
+    <div piwik-content-block class="clientconfighelp"
+         content-title="{{ 'SearchEngineKeywordsPerformance_HowToGetOAuthClientConfig'|translate|e('html_attr') }}"
+    >
+        {{ 'SearchEngineKeywordsPerformance_VisitOAuthHowTo'|translate('<a href="https://matomo.org/docs/search-engine-keywords-performance/#how-to-import-yandex-search-keywords-into-matomo">', '</a>', 'Yandex')|raw }}
+    </div>
+
+    <div piwik-content-block class="{% if not isClientConfigured %}clientconfiguration{% endif %}"
+         content-title="{{ 'SearchEngineKeywordsPerformance_SetUpOAuthClientConfig'|translate|e('html_attr') }}"
+    >
+        <form method="post" action="" id="clientconfigform">
+
+            <p>{{ 'SearchEngineKeywordsPerformance_ProvideYandexClientConfig'|translate }}</p>
+
+
+            <div piwik-field uicontrol="text" name="clientid"
+                 title="{{ 'SearchEngineKeywordsPerformance_ClientId'|translate|e('html_attr') }}">
+            </div>
+
+            <div piwik-field uicontrol="text" name="clientsecret"
+                 title="{{ 'SearchEngineKeywordsPerformance_ClientSecret'|translate|e('html_attr') }}">
+            </div>
+
+            <input type="hidden" name="config_nonce" value="{{ nonce|e('html_attr') }}" />
+
+            <button type="submit" class="btn">{{ 'General_Save'|translate }}</button>
+
+        </form>
+    </div>
+{% endblock %}
